@@ -43,9 +43,8 @@ public final class JJazzLabRuntime {
             initializationError = null;
             LOGGER.info("JJazzLab Toolkit runtime is ready");
         } catch (Exception ex) {
-            initializationError = ex.getMessage() == null
-                    ? ex.getClass().getSimpleName()
-                    : ex.getMessage();
+            // Keep implementation details in server logs only; health responses are public.
+            initializationError = "Rendering engine initialization failed. Check server logs.";
             LOGGER.log(Level.SEVERE, "Could not initialize JJazzLab Toolkit runtime", ex);
         }
     }
