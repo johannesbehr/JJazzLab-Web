@@ -136,7 +136,7 @@ Example:
 | `200` | Rendering successful |
 | `400` | Malformed request, missing song field or unsupported request field |
 | `413` | Request payload too large |
-| `415` | Unsupported request content type or file format |
+| `415` | Unsupported request content type |
 | `422` | Song is readable but cannot be rendered |
 | `500` | Unexpected internal server error |
 | `503` | Rendering engine unavailable or not ready |
