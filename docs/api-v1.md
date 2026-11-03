@@ -1,16 +1,16 @@
-# Render Server HTTP API – v1 draft
+# Render Server HTTP API – v1
 
-**Status:** Proposal for the first implementation. This document is the contract to implement against; details can still be adjusted before the first stable release.
+**Status:** Initial implementation contract.
 
 Base path: `/api/v1`
 
-All endpoints return UTF-8 JSON for structured responses. Errors use a consistent JSON body.
+The API is stateless and does not require cookies or server-side user sessions. Song input is JJazzLab-compatible `.sng` XML.
 
-## 1. Health and capabilities
+## 1. Health
 
 `GET /api/v1/health`
 
-Returns whether the service is ready and identifies the software/runtime versions.
+Returns service readiness and version information.
 
 Example:
 
@@ -29,90 +29,121 @@ Example:
 }
 ```
 
-The endpoint should distinguish a running HTTP service from a ready rendering engine. If the engine cannot render, return HTTP 503 with `status: "not_ready"` and a useful diagnostic message.
+A running HTTP service is not necessarily a ready rendering service. If the rendering engine is unavailable or failed to initialize, return HTTP `503` and `status: "not_ready"` with a diagnostic message.
 
-## 2. Available styles
+## 2. Render a song
 
-`GET /api/v1/styles`
+`POST /api/v1/render`
 
-Returns the styles available to the rendering engine.
+Request content type: `multipart/form-data`
+
+| Field | Required | Meaning |
+| --- | --- | --- |
+| `song` | yes | JJazzLab `.sng` file containing XML |
+| `mix` | no | JSON mix configuration |
+| `options` | no | JSON rendering options |
+
+Style selection is intentionally out of scope for the initial implementation. It will be addressed when the Editor is implemented.
+
+Rendering must not require a server-side user session.
+
+### 2.1 Successful response
+
+HTTP status: `200 OK`
+
+Content type: `multipart/mixed`
+
+The response contains two parts:
+
+1. JSON metadata (`Content-Type: application/json; charset=utf-8`, `Content-ID: <metadata>`)
+2. MIDI data (`Content-Type: audio/midi`, `Content-ID: <midi>`)
+
+The parts are identified by their Content-ID, not by their position in the response.
+
+Example JSON metadata part:
+
+```json
+{
+  "success": true,
+  "engineVersion": "1.0.0",
+  "metadata": {
+    "ticksPerQuarterNote": 960,
+    "totalBars": 32,
+    "tempoMap": [
+      { "tick": 0, "bpm": 120 }
+    ],
+    "timeSignatureMap": [
+      { "tick": 0, "numerator": 4, "denominator": 4 }
+    ],
+    "positions": [
+      { "tick": 0, "bar": 1, "beat": 1, "chord": "Am7" },
+      { "tick": 3840, "bar": 2, "beat": 1, "chord": "Dm7" }
+    ]
+  }
+}
+```
+
+The MIDI part contains the generated Standard MIDI File bytes. MIDI data must be transferred as binary data, never Base64-encoded inside JSON.
+
+### 2.2 Timing and playback metadata
+
+All `tick` values are absolute MIDI ticks measured from the beginning of the returned MIDI file. `ticksPerQuarterNote` defines the tick resolution.
+
+- `tempoMap` describes tempo changes, with each event positioned by absolute tick.
+- `timeSignatureMap` describes time-signature changes, also positioned by absolute tick.
+- `positions` maps musical events (especially chord changes) to absolute MIDI ticks.
+- `bar` and `beat` are one-based display positions on the playback timeline.
+
+The metadata and MIDI file must share exactly the same timeline and origin. The Player can determine the active chord by finding the last position event whose tick is less than or equal to the current MIDI playback tick.
+
+## 3. Errors
+
+If a request cannot be rendered, the server returns a JSON response only. There is no MIDI part.
+
+Content type: `application/json; charset=utf-8`
 
 Example:
 
 ```json
 {
-  "styles": [
-    {
-      "id": "style-id",
-      "name": "Style display name",
-      "source": "bundled"
-    }
-  ]
-}
-```
-
-Style IDs are the values accepted by the render endpoint. The list must describe what is actually installed on this server; clients must not assume that every server has identical optional style packs.
-
-## 3. Render a song
-
-`POST /api/v1/render`
-
-Content type: `multipart/form-data`
-
-Initial request fields:
-
-| Field | Required | Meaning |
-| --- | --- | --- |
-| `song` | yes | JJazzLab `.sng` file (XML) |
-| `style` | yes | Style ID returned by `GET /styles` |
-| `mix` | no | JSON mix configuration |
-| `options` | no | JSON rendering options |
-
-The first implementation should validate the uploaded song and selected style before invoking the engine. Rendering must not require a server-side user session.
-
-### Response design
-
-The response format for MIDI plus playback metadata is intentionally still open. The implementation should not lock clients into a large base64-encoded MIDI field in JSON or into server-side session state. Before implementing this endpoint, settle on a transport that lets the client retrieve MIDI bytes and structured metadata together while keeping the server stateless (for example, a multipart response or a documented binary container).
-
-The metadata should be sufficient for a player to show musical position without parsing the `.sng` file. At minimum, evaluate:
-
-- tempo and time signature;
-- total bars and playback duration;
-- bar/beat positions;
-- chord progression and the corresponding MIDI playback positions.
-
-The exact timing representation (ticks, microseconds, or both) must be specified before implementation.
-
-## 4. Error format
-
-Use a predictable JSON error object:
-
-```json
-{
+  "success": false,
   "error": {
     "code": "INVALID_SONG",
-    "message": "The uploaded song could not be parsed.",
-    "details": {}
+    "message": "The supplied song could not be rendered.",
+    "details": [
+      {
+        "code": "INVALID_CHORD",
+        "message": "Invalid chord: Hm7",
+        "position": {
+          "bar": 4,
+          "beat": 2
+        }
+      }
+    ]
   }
 }
 ```
 
-Suggested HTTP status mapping:
+`details` is an array and may be empty. Individual detail objects may include additional structured context, such as a musical position. Public error messages must not expose stack traces, local filesystem paths, or other sensitive server details. Full diagnostics belong in server logs.
 
-- `400` – malformed request or invalid song/options;
-- `404` – unknown endpoint or style ID;
-- `413` – upload too large;
-- `415` – unsupported content type;
-- `422` – valid request that cannot be rendered;
-- `500` – unexpected server error;
-- `503` – rendering engine unavailable/not ready.
+### 3.1 HTTP status codes
 
-Do not expose stack traces or local filesystem paths in public error responses. Detailed diagnostics belong in server logs.
+| Status | Meaning |
+| --- | --- |
+| `200` | Rendering successful |
+| `400` | Malformed request or missing required field |
+| `413` | Request payload too large |
+| `415` | Unsupported request content type or file format |
+| `422` | Song is readable but cannot be rendered |
+| `500` | Unexpected internal server error |
+| `503` | Rendering engine unavailable or not ready |
 
-## 5. CORS
+Errors produced by the API should use the JSON error structure above, including when an HTTP error status is returned. Reverse proxies and servlet containers should be configured so that they do not replace API errors with generic HTML error pages.
 
-The server should support configurable CORS origins so a Player or Diagnostics page hosted on a different origin can call the API. Avoid wildcard origins when credentials are enabled. The API should not require cookies or browser sessions.
+## 4. CORS
 
-## 6. Compatibility
+The server should support configurable CORS origins so a Player or Diagnostics page hosted on a different origin can call the API. Avoid wildcard origins when credentials are enabled. The API does not require cookies or browser sessions.
 
-Expose both the API version and the JJazzLab rendering engine version. Clients should be able to display these values and report them when troubleshooting. Rendering behavior may differ between engine versions, so version information is part of the diagnostic contract.
+## 5. Compatibility
+
+Expose both the API version and JJazzLab rendering engine version. Clients should be able to display these values and include them in diagnostic reports. Rendering behavior may differ between engine versions, so engine version information is part of the diagnostic contract.
