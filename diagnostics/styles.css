@@ -60,3 +60,23 @@ footer { padding: 24px 4px 0; color: #98a2b3; font-size: .78rem; }
   .badge.ok { background: #14532d; color: #bbf7d0; }
   .badge.fail { background: #7f1d1d; color: #fecaca; }
 }
+
+.render-panel { margin-top: 18px; }
+.file-row { margin-top: 14px; }
+input[type="file"] { padding: 8px; }
+.download-link {
+  display: inline-block;
+  margin-top: 14px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #e8f0ff;
+  color: #1949aa;
+  font-weight: 700;
+  text-decoration: none;
+}
+.download-link:hover { background: #d8e6ff; }
+.download-link[hidden] { display: none; }
+@media (prefers-color-scheme: dark) {
+  .download-link { background: #20365d; color: #c7dcff; }
+  .download-link:hover { background: #2a4778; }
+}
