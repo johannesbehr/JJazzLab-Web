@@ -32,13 +32,15 @@ The Diagnostics page uses the public HTTP API only. It is intended to work again
 
 ## First implementation milestone
 
-1. Define and implement the versioned API.
-2. Expose server health and engine/version information.
-3. Expose the available styles.
-4. Render a supplied `.sng` file to MIDI.
+1. Implement the versioned HTTP API and health endpoint.
+2. Accept a supplied `.sng` file and render it to MIDI.
+3. Return MIDI and playback metadata in a multipart response.
+4. Return structured JSON errors when rendering fails.
 5. Verify the complete flow through the Diagnostics page.
 
-See [API v1 draft](docs/api-v1.md) and [Diagnostics](diagnostics/README.md).
+Style discovery and style selection are deliberately postponed until the Editor phase.
+
+See [API v1](docs/api-v1.md) and [Diagnostics](diagnostics/README.md).
 
 ## License
 
