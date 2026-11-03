@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>JJazzLab Web – Render Server Diagnostics</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="diagnostics.js" defer></script>
+</head>
+<body>
+  <main class="page">
+    <header class="header">
+      <div class="eyebrow">JJazzLab Web</div>
+      <h1>Render Server Diagnostics</h1>
+      <p>Check the availability and capabilities of a JJazzLab Render Server.</p>
+    </header>
+
+    <section class="panel connection">
+      <label for="server-url">Render Server URL</label>
+      <div class="url-row">
+        <input id="server-url" type="url" spellcheck="false" placeholder="https://example.org" value="">
+        <button id="test-button" type="button">Run checks</button>
+      </div>
+      <p class="hint">Enter the server base URL, without <code>/api/v1</code>. The page uses the public HTTP API.</p>
+      <div id="connection-status" class="connection-status" role="status" aria-live="polite">Not tested yet</div>
+    </section>
+
+    <section class="results-grid">
+      <article class="panel">
+        <div class="panel-heading">
+          <div>
+            <div class="eyebrow">Check 01</div>
+            <h2>Server health</h2>
+          </div>
+          <span id="health-badge" class="badge neutral">Pending</span>
+        </div>
+        <p class="description">HTTP availability, API version, rendering engine and Java runtime.</p>
+        <pre id="health-result" class="result">No result yet.</pre>
+      </article>
+
+      <article class="panel">
+        <div class="panel-heading">
+          <div>
+            <div class="eyebrow">Check 02</div>
+            <h2>Available styles</h2>
+          </div>
+          <span id="styles-badge" class="badge neutral">Pending</span>
+        </div>
+        <p class="description">Styles reported by the target server.</p>
+        <div id="styles-result" class="style-list empty">No styles loaded yet.</div>
+      </article>
+    </section>
+
+    <section class="panel notes">
+      <h2>About this diagnostic</h2>
+      <p>This page is a static client. It does not need to be installed on the Render Server itself and can test a remote instance.</p>
+      <p>If the page is hosted on a different domain, the target server must allow this page's origin through its CORS configuration.</p>
+      <p class="hint">The first version tests the health and style-list endpoints. Song upload, MIDI rendering and playback-metadata checks will be added as the render response contract is finalized.</p>
+    </section>
+
+    <footer>JJazzLab Web · Early development</footer>
+  </main>
+</body>
+</html>
