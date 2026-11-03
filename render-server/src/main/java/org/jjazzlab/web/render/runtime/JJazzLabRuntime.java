@@ -4,6 +4,7 @@ import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jjazz.rhythmdatabase.api.RhythmDatabase;
 import org.jjazz.rhythmdatabase.spi.SharedRdbInstanceProvider;
 
 /**
@@ -38,7 +39,11 @@ public final class JJazzLabRuntime {
                         "No SharedRdbInstanceProvider is registered with the JJazzLab Toolkit");
             }
 
-            provider.get();
+            RhythmDatabase database = provider.get();
+            if (database == null || database.getRhythms().isEmpty()) {
+                throw new IllegalStateException("The rhythm database contains no available rhythms");
+            }
+
             READY.set(true);
             initializationError = null;
             LOGGER.info("JJazzLab Toolkit runtime is ready");
