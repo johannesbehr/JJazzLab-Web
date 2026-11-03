@@ -19,7 +19,7 @@ import org.jjazz.midimix.spi.MidiMixManager;
 import org.jjazz.musiccontrol.api.ControlTrack;
 import org.jjazz.musiccontrol.api.playbacksession.PlaybackSession;
 import org.jjazz.musiccontrol.api.playbacksession.SessionConfig;
-import org.jjazz.musiccontrol.api.playbacksession.StaticSongSession;
+import org.jjazz.musiccontrol.api.playbacksession.BaseSongSession;
 import org.jjazz.outputsynth.spi.OutputSynthManager;
 import org.jjazz.rhythm.api.MusicGenerationException;
 import org.jjazz.song.api.Song;
@@ -49,8 +49,8 @@ public final class SongRenderService {
 
         SongContext songContext = SongContextFactory.getDefault().of(song, midiMix);
         SessionConfig config = new SessionConfig(false, false, true, 1, null);
-        StaticSongSession session = StaticSongSession.getSession(
-                songContext, config, PlaybackSession.Context.SONG);
+        BaseSongSession session = new BaseSongSession(
+                songContext, config, false, PlaybackSession.Context.SONG);
 
         try {
             session.generate(true);
