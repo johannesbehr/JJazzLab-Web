@@ -13,50 +13,53 @@
     <header class="header">
       <div class="eyebrow">JJazzLab Web</div>
       <h1>Render Server Diagnostics</h1>
-      <p>Check the availability and capabilities of a JJazzLab Render Server.</p>
+      <p>Check a Render Server and test the complete song-to-MIDI workflow.</p>
     </header>
 
     <section class="panel connection">
       <label for="server-url">Render Server URL</label>
       <div class="url-row">
         <input id="server-url" type="url" spellcheck="false" placeholder="https://example.org" value="">
-        <button id="test-button" type="button">Run checks</button>
+        <button id="test-button" type="button">Check health</button>
       </div>
       <p class="hint">Enter the server base URL, without <code>/api/v1</code>. The page uses the public HTTP API.</p>
       <div id="connection-status" class="connection-status" role="status" aria-live="polite">Not tested yet</div>
     </section>
 
-    <section class="results-grid">
-      <article class="panel">
-        <div class="panel-heading">
-          <div>
-            <div class="eyebrow">Check 01</div>
-            <h2>Server health</h2>
-          </div>
-          <span id="health-badge" class="badge neutral">Pending</span>
+    <section class="panel">
+      <div class="panel-heading">
+        <div>
+          <div class="eyebrow">Check 01</div>
+          <h2>Server health</h2>
         </div>
-        <p class="description">HTTP availability, API version, rendering engine and Java runtime.</p>
-        <pre id="health-result" class="result">No result yet.</pre>
-      </article>
+        <span id="health-badge" class="badge neutral">Pending</span>
+      </div>
+      <p class="description">HTTP availability, API version, JJazzLab engine readiness and Java runtime.</p>
+      <pre id="health-result" class="result">No result yet.</pre>
+    </section>
 
-      <article class="panel">
-        <div class="panel-heading">
-          <div>
-            <div class="eyebrow">Check 02</div>
-            <h2>Available styles</h2>
-          </div>
-          <span id="styles-badge" class="badge neutral">Pending</span>
+    <section class="panel render-panel">
+      <div class="panel-heading">
+        <div>
+          <div class="eyebrow">Check 02</div>
+          <h2>Render a song</h2>
         </div>
-        <p class="description">Styles reported by the target server.</p>
-        <div id="styles-result" class="style-list empty">No styles loaded yet.</div>
-      </article>
+        <span id="render-badge" class="badge neutral">Pending</span>
+      </div>
+      <p class="description">Upload a JJazzLab .sng file. The response should contain JSON metadata and binary MIDI data.</p>
+      <div class="url-row file-row">
+        <input id="song-file" type="file" accept=".sng">
+        <button id="render-button" type="button" disabled>Render MIDI</button>
+      </div>
+      <pre id="render-result" class="result">Select a .sng file to begin.</pre>
+      <a id="midi-download" class="download-link" hidden>Download rendered MIDI</a>
     </section>
 
     <section class="panel notes">
       <h2>About this diagnostic</h2>
       <p>This page is a static client. It does not need to be installed on the Render Server itself and can test a remote instance.</p>
       <p>If the page is hosted on a different domain, the target server must allow this page's origin through its CORS configuration.</p>
-      <p class="hint">The first version tests the health and style-list endpoints. Song upload, MIDI rendering and playback-metadata checks will be added as the render response contract is finalized.</p>
+      <p class="hint">The initial API accepts a song file only. Style selection, mix configuration and additional render options are not part of this first implementation.</p>
     </section>
 
     <footer>JJazzLab Web · Early development</footer>
