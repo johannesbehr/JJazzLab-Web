@@ -46,6 +46,14 @@ mvn clean package
 
 Deploy `target/jjazzlab-render-server.war` to a Java 25 / Tomcat 11 instance.
 
+Configure browser access with the `JJAZZLAB_CORS_ORIGINS` environment variable, using a comma-separated list of allowed origins, for example:
+
+```sh
+JJAZZLAB_CORS_ORIGINS=https://player.example.org,https://diagnostics.example.org
+```
+
+The filter does not enable credentials. Use `*` only when the API is intentionally public to browser clients from any origin.
+
 ## API
 
 See [API v1](../docs/api-v1.md).
