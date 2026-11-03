@@ -24,8 +24,8 @@ import org.jjazz.chordleadsheet.api.UnsupportedEditException;
 import org.jjazz.rhythm.api.MusicGenerationException;
 import org.jjazz.song.api.SongCreationException;
 import org.jjazzlab.web.render.runtime.SongRenderService;
-import org.jjazz.web.render.runtime.SongRenderService.RenderOutput;
-import org.jjazz.web.render.runtime.JJazzLabRuntime;
+import org.jjazzlab.web.render.runtime.SongRenderService.RenderOutput;
+import org.jjazzlab.web.render.runtime.JJazzLabRuntime;
 
 /**
  * Accepts a .sng upload and returns a multipart response containing metadata
@@ -100,7 +100,7 @@ public final class RenderServlet extends HttpServlet {
                     "INVALID_SONG", "The uploaded song could not be loaded as a valid JJazzLab song.");
         } catch (UnsupportedEditException | MusicGenerationException ex) {
             LOGGER.log(Level.INFO, "JJazzLab could not render the uploaded song: {0}", ex.getMessage());
-            writeError(response, HttpServletResponse.SC_UNPROCESSABLE_CONTENT,
+            writeError(response, 422,
                     "RENDER_FAILED", "JJazzLab could not generate MIDI for the supplied song.");
         } catch (ServletException ex) {
             LOGGER.log(Level.INFO, "Invalid multipart request", ex);
