@@ -23,7 +23,7 @@ import java.util.logging.Logger;
 import org.jjazz.chordleadsheet.api.UnsupportedEditException;
 import org.jjazz.rhythm.api.MusicGenerationException;
 import org.jjazz.song.api.SongCreationException;
-import org.jjazz.web.render.runtime.SongRenderService;
+import org.jjazzlab.web.render.runtime.SongRenderService;
 import org.jjazz.web.render.runtime.SongRenderService.RenderOutput;
 import org.jjazz.web.render.runtime.JJazzLabRuntime;
 
@@ -81,7 +81,7 @@ public final class RenderServlet extends HttpServlet {
             for (Part part : request.getParts()) {
                 if (!"song".equals(part.getName()) && part.getSize() > 0) {
                     writeError(response, HttpServletResponse.SC_BAD_REQUEST,
-                            "UNSUPPORTED_FIELD", "Unsupported request field: " + part.getName());
+                            "UNSUPPORTED_FIELD", "The request contains an unsupported multipart field.");
                     return;
                 }
             }
@@ -96,7 +96,7 @@ public final class RenderServlet extends HttpServlet {
 
         } catch (SongCreationException ex) {
             LOGGER.log(Level.INFO, "The uploaded song could not be loaded: {0}", ex.getMessage());
-            writeError(response, HttpServletResponse.SC_UNPROCESSABLE_CONTENT,
+            writeError(response, 422,
                     "INVALID_SONG", "The uploaded song could not be loaded as a valid JJazzLab song.");
         } catch (UnsupportedEditException | MusicGenerationException ex) {
             LOGGER.log(Level.INFO, "JJazzLab could not render the uploaded song: {0}", ex.getMessage());
