@@ -21,15 +21,16 @@ Example:
   "serverVersion": "0.1.0-SNAPSHOT",
   "engine": {
     "name": "JJazzLab",
-    "version": "..."
+    "version": "5.2.1",
+    "status": "ready"
   },
   "runtime": {
-    "javaVersion": "..."
+    "javaVersion": "25"
   }
 }
 ```
 
-A running HTTP service is not necessarily a ready rendering service. If the rendering engine is unavailable or failed to initialize, return HTTP `503` and `status: "not_ready"` with a diagnostic message.
+A running HTTP service is not necessarily a ready rendering service. If the engine is unavailable or failed to initialize, return HTTP `503` and `status: "not_ready"`. The public health response must not expose stack traces or local filesystem paths.
 
 ## 2. Render a song
 
@@ -40,10 +41,8 @@ Request content type: `multipart/form-data`
 | Field | Required | Meaning |
 | --- | --- | --- |
 | `song` | yes | JJazzLab `.sng` file containing XML |
-| `mix` | no | JSON mix configuration |
-| `options` | no | JSON rendering options |
 
-Style selection is intentionally out of scope for the initial implementation. It will be addressed when the Editor is implemented.
+The initial implementation accepts the song file only. Mix configuration, render options and style selection are reserved for later API extensions. Style selection will be addressed when the Editor is implemented.
 
 Rendering must not require a server-side user session.
 
@@ -65,7 +64,7 @@ Example JSON metadata part:
 ```json
 {
   "success": true,
-  "engineVersion": "1.0.0",
+  "engineVersion": "5.2.1",
   "metadata": {
     "ticksPerQuarterNote": 960,
     "totalBars": 32,
@@ -91,10 +90,14 @@ All `tick` values are absolute MIDI ticks measured from the beginning of the ret
 
 - `tempoMap` describes tempo changes, with each event positioned by absolute tick.
 - `timeSignatureMap` describes time-signature changes, also positioned by absolute tick.
-- `positions` maps musical events (especially chord changes) to absolute MIDI ticks.
+- `positions` maps chord changes to absolute MIDI ticks.
 - `bar` and `beat` are one-based display positions on the playback timeline.
 
 The metadata and MIDI file must share exactly the same timeline and origin. The Player can determine the active chord by finding the last position event whose tick is less than or equal to the current MIDI playback tick.
+
+### 2.3 Request limits
+
+The initial server configuration limits the uploaded song file to 20 MiB. Larger uploads return HTTP `413`.
 
 ## 3. Errors
 
@@ -131,7 +134,7 @@ Example:
 | Status | Meaning |
 | --- | --- |
 | `200` | Rendering successful |
-| `400` | Malformed request or missing required field |
+| `400` | Malformed request, missing song field or unsupported request field |
 | `413` | Request payload too large |
 | `415` | Unsupported request content type or file format |
 | `422` | Song is readable but cannot be rendered |
