@@ -3,7 +3,6 @@ package org.jjazzlab.web.render.runtime;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.logging.Logger;
-import org.jjazz.harmony.api.TimeSignature;
 import org.jjazz.rhythmdatabase.api.DefaultRhythmDatabaseImpl;
 import org.jjazz.rhythmdatabase.api.RhythmDatabase;
 import org.jjazz.rhythmdatabase.spi.SharedRdbInstanceProvider;
