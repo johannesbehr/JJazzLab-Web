@@ -28,7 +28,7 @@ import org.jjazz.chordleadsheet.api.UnsupportedEditException;
 
 /**
  * Renders a JJazzLab song to MIDI and extracts playback metadata from the same
- * generated playback session. The session is request-scoped and always closed.
+ * request-scoped song context.
  */
 public final class SongRenderService {
 
