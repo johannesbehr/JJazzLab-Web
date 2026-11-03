@@ -16,9 +16,7 @@ import org.jjazz.harmony.api.Position;
 import org.jjazz.midimix.api.MidiMix;
 import org.jjazz.midimix.spi.MidiMixManager;
 import org.jjazz.musiccontrol.api.ControlTrack;
-import org.jjazz.musiccontrol.api.playbacksession.PlaybackSession;
-import org.jjazz.musiccontrol.api.playbacksession.SessionConfig;
-import org.jjazz.musiccontrol.api.playbacksession.BaseSongSession;
+import org.jjazz.rhythmmusicgeneration.api.SongSequenceBuilder;
 import org.jjazz.outputsynth.spi.OutputSynthManager;
 import org.jjazz.rhythm.api.MusicGenerationException;
 import org.jjazz.song.api.Song;
@@ -47,31 +45,30 @@ public final class SongRenderService {
         OutputSynthManager.getDefault().getDefaultOutputSynth().fixInstruments(midiMix, true);
 
         SongContext songContext = SongContextFactory.getDefault().of(song, midiMix);
-        SessionConfig config = new SessionConfig(false, false, true, 1, null);
-        BaseSongSession session = new BaseSongSession(
-                songContext, config, false, PlaybackSession.Context.SONG);
+        // Use JJazzLab's export preparation so MIDI includes tempo, instrument setup,
+        // drum routing and all other events required by a standalone MIDI player.
+        SongSequenceBuilder sequenceBuilder = new SongSequenceBuilder(songContext);
+        SongSequenceBuilder.SongSequence generated = sequenceBuilder.buildAll(true);
+        sequenceBuilder.makeSequenceExportable(generated, false);
 
-        try {
-            session.generate(true);
-
-            Sequence sequence = session.getSequence();
-            if (sequence == null) {
-                throw new MusicGenerationException("The rendering engine produced no MIDI sequence.");
-            }
-
-            ControlTrack controlTrack = session.getControlTrack();
-            ObjectNode metadata = createMetadata(song, songContext, sequence, controlTrack);
-            byte[] midi = writeMidi(sequence);
-
-            ObjectNode response = JSON.createObjectNode();
-            response.put("success", true);
-            response.put("engineVersion", JJazzLabRuntime.ENGINE_VERSION);
-            response.set("metadata", metadata);
-
-            return new RenderOutput(response, midi);
-        } finally {
-            session.close();
+        Sequence sequence = generated.sequence;
+        if (sequence == null) {
+            throw new MusicGenerationException("The rendering engine produced no MIDI sequence.");
         }
+
+        // The ControlTrack gives us the exact playback-timeline chord positions.
+        // We extract its events for metadata without adding JJazzLab's private
+        // control messages to the exported MIDI file.
+        ControlTrack controlTrack = new ControlTrack(songContext, -1);
+        ObjectNode metadata = createMetadata(song, songContext, sequence, controlTrack);
+        byte[] midi = writeMidi(sequence);
+
+        ObjectNode response = JSON.createObjectNode();
+        response.put("success", true);
+        response.put("engineVersion", JJazzLabRuntime.ENGINE_VERSION);
+        response.set("metadata", metadata);
+
+        return new RenderOutput(response, midi);
     }
 
     private ObjectNode createMetadata(
