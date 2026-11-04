@@ -15,21 +15,25 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Configurable CORS support for browser clients hosted on another origin.
+ * CORS support scoped to the Render Server API.
  *
- * Set JJAZZLAB_CORS_ORIGINS to a comma-separated list of allowed origins.
+ * By default, browser clients from every origin are allowed. Set
+ * JJAZZLAB_CORS_ORIGINS to a comma-separated list to restrict access.
  * Credentials are deliberately not enabled; the API is stateless.
  */
-@WebFilter("/*")
+@WebFilter("/api/v1/*")
 public final class CorsFilter implements Filter {
 
     private Set<String> allowedOrigins = Set.of();
-    private boolean allowAnyOrigin;
+    private boolean allowAnyOrigin = true;
 
     @Override
     public void init(FilterConfig filterConfig) {
         String configuredOrigins = System.getenv("JJAZZLAB_CORS_ORIGINS");
+
+        // An unset or blank variable means the public default: allow every origin.
         if (configuredOrigins == null || configuredOrigins.isBlank()) {
+            allowAnyOrigin = true;
             allowedOrigins = Set.of();
             return;
         }
