@@ -85,8 +85,8 @@ class JJazzLabPlayer extends HTMLElement {
     this.loadAndRender().catch(error => this.fail(error));
   }
 
-  attributeChangedCallback() {
-    if (this.isConnected && !this.loading && this.hasAttribute("song-url")) {
+  attributeChangedCallback(name) {
+    if (["song-url", "render-server"].includes(name) && this.isConnected && !this.loading) {
       this.loadAndRender().catch(error => this.fail(error));
     }
   }
