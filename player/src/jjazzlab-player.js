@@ -74,6 +74,7 @@ class JJazzLabPlayer extends HTMLElement {
     this.stopButton.addEventListener("click", () => this.stop());
     this.ready = false;
     this.loading = false;
+    this.midiLoaded = false;
     this.context = null;
     this.synth = null;
     this.sequencer = null;
@@ -140,11 +141,12 @@ class JJazzLabPlayer extends HTMLElement {
       const parts = parseMultipart(await response.arrayBuffer(), (match[1] || match[2]).trim());
       const metadataPart = parts.find(part => part.id === "metadata");
       const midiPart = parts.find(part => part.id === "midi");
-      if (!metadataAart || !midiPart) throw new Error("Render-Antwort enthält keine Metadata- und MIDI-Teile.");
+      if (!metadataPart || !midiPart) throw new Error("Render-Antwort enthält keine Metadata- und MIDI-Teile.");
 
       this.metadata = JSON.parse(new TextDecoder().decode(metadataPart.body));
       if (!this.metadata.success) throw new Error("Der Render-Vorgang war nicht erfolgreich.");
       this.midiBuffer = midiPart.body.slice().buffer;
+      this.midiLoaded = false;
       this.ready = true;
       this.playButton.disabled = false;
       this.setStatus("Bereit");
@@ -164,6 +166,7 @@ class JJazzLabPlayer extends HTMLElement {
     const soundfontResponse = await fetch(this.requiredAttribute("soundfont-url"));
     if (!soundfontResponse.ok) throw new Error(`SoundFont konnte nicht geladen werden (HTTP ${soundfontResponse.status}).`);
     await this.synth.soundBankManager.addSoundBank(await soundfontResponse.arrayBuffer(), "main");
+    await this.synth.isReady;
     this.sequencer = new Sequencer(this.synth);
   }
 
@@ -173,7 +176,10 @@ class JJazzLabPlayer extends HTMLElement {
       await this.initializeAudio();
       await this.context.resume();
       if (this.sequencer.paused) {
-        if (!this.sequencer.midiData) this.sequencer.loadNewSongList([{ binary: this.midiBuffer }]);
+        if (!this.midiLoaded) {
+          this.sequencer.loadNewSongList([{ binary: this.midiBuffer }]);
+          this.midiLoaded = true;
+        }
         this.sequencer.play();
         this.playButton.textContent = "Pause";
         this.stopButton.disabled = false;
