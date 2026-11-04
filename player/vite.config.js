@@ -23,7 +23,7 @@ export default defineConfig({
       mkdirSync(output, { recursive: true });
       copyFileSync(
         resolve(root, "node_modules/spessasynth_lib/dist/spessasynth_processor.min.js"),
-        resolve(output, "spessasynt_processor.min.js")
+        resolve(output, "spessasynth_processor.min.js")
       );
     }
   }]
