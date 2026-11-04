@@ -1,0 +1,9 @@
+{
+  "name": "jjazzlab-web-player",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": { "build": "vite build" },
+  "dependencies": { "spessasynth_lib": "4.4.0" },
+  "devDependencies": { "vite": "6.4.1" }
+}
