@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>JJazzLab Web – Player Integration Test</title>
+  <style>
+    :root { color-scheme: light dark; font: 16px/1.5 system-ui, sans-serif; }
+    body { margin: 0; padding: 32px 16px; background: Canvas; color: CanvasText; }
+    main { max-width: 760px; margin: 0 auto; }
+    h1 { margin-bottom: 8px; }
+    .muted { color: GrayText; }
+    form, .test-area { margin-top: 24px; padding: 20px; border: 1px solid color-mix(in srgb, CanvasText 20%, transparent); border-radius: 12px; }
+    label { display: block; margin: 14px 0 5px; font-weight: 600; }
+    input { box-sizing: border-box; width: 100%; padding: 10px; border: 1px solid color-mix(in srgb, CanvasText 30%, transparent); border-radius: 6px; background: Canvas; color: CanvasText; font: inherit; }
+    button { margin-top: 18px; padding: 10px 16px; border: 0; border-radius: 7px; background: #315f9b; color: white; font: inherit; cursor: pointer; }
+    jjazzlab-player { display: block; margin-top: 16px; }
+    code { overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+<main>
+  <p class="muted">JJazzLab Web · Browser integration test</p>
+  <h1>Player testen</h1>
+  <p>Diese Seite testet den vollständigen Ablauf: Song laden, an den Render Server senden, MIDI empfangen und mit SpessaSynth im Browser abspielen.</p>
+
+  <form id="player-form">
+    <label for="song-url">URL der .sng-Datei</label>
+    <input id="song-url" type="url" required value="https://raw.githubusercontent.com/CapoShiva/jjazz-repertoire/refs/heads/main/Repertoire/AChildIsBorn-Bb-Theme.sng">
+
+    <label for="render-server">Render Server (Basis-URL)</label>
+    <input id="render-server" type="url" required value="https://wmager.ddns.net/java/jjazzlab-render-server">
+
+    <label for="soundfont-url">SoundFont-URL</label>
+    <input id="soundfont-url" type="url" required value="https://johannesbehr.github.io/JJazzLab-Web/player/soundfonts/JJazzlab.sf3">
+
+    <button type="submit">Player laden</button>
+  </form>
+
+  <section class="test-area">
+    <h2>Wiedergabe</h2>
+    <p class="muted">Nach dem Laden sollte der Player zunächst „Bereit“ anzeigen. Mit Play wird die Audio-Engine initialisiert und der Song abgespielt.</p>
+    <div id="player-container" aria-live="polite">Noch kein Player geladen.</div>
+  </section>
+</main>
+
+<script type="module">
+  import "../player/jjazzlab-player.js";
+
+  const form = document.querySelector("#player-form");
+  const container = document.querySelector("#player-container");
+
+  form.addEventListener("submit", event => {
+    event.preventDefault();
+
+    const songUrl = document.querySelector("#song-url").value.trim();
+    const renderServer = document.querySelector("#render-server").value.trim();
+    const soundfontUrl = document.querySelector("#soundfont-url").value.trim();
+
+    container.replaceChildren();
+    const player = document.createElement("jjazzlab-player");
+    player.setAttribute("song-url", songUrl);
+    player.setAttribute("render-server", renderServer);
+    player.setAttribute("soundfont-url", soundfontUrl);
+    container.append(player);
+  });
+
+  form.requestSubmit();
+</script>
+</body>
+</html>
