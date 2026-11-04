@@ -41,7 +41,7 @@ jobs:
       - name: Include diagnostics page
         run: |
           mkdir -p site/diagnostics
-          cp diagnostics/index.html diagnostics/styles.css diagnostics/diagnostics.js site/diagnostics/
+          cp diagnostics/index.html diagnostics/styles.css diagnostics/diagnostics.js diagnostics/player-test.html site/diagnostics/
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
