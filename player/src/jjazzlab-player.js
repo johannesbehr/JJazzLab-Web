@@ -1,6 +1,7 @@
 import { Sequencer, WorkletSynthesizer } from "spessasynth_lib";
 
 const API_PATH = "/api/v1";
+const SOUNDFONT_CACHE = "jjazzlab-player-soundfonts-v1";
 
 function findBytes(haystack, needle, startAt) {
   outer: for (let i = startAt; i <= haystack.length - needle.length; i++) {
@@ -47,6 +48,35 @@ function parseMultipart(buffer, boundary) {
   return parts;
 }
 
+async function readResponseBytes(response, onProgress) {
+  const total = Number(response.headers.get("Content-Length")) || 0;
+  if (!response.body) {
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    onProgress?.(bytes.length, total);
+    return bytes;
+  }
+
+  const reader = response.body.getReader();
+  const chunks = [];
+  let loaded = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    loaded += value.length;
+    onProgress?.(loaded, total);
+  }
+
+  const result = new Uint8Array(loaded);
+  let offset = 0;
+  for (const chunk of chunks) {
+    result.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return result;
+}
+
 class JJazzLabPlayer extends HTMLElement {
   static observedAttributes = ["song-url", "render-server", "soundfont-url", "theme"];
 
@@ -57,19 +87,29 @@ class JJazzLabPlayer extends HTMLElement {
       <style>
         :host { display:block; width:100%; color:var(--jj-text,#202124); font:14px/1.4 system-ui,sans-serif; }
         .player { box-sizing:border-box; display:flex; align-items:center; gap:10px; padding:12px 14px; border:1px solid var(--jj-border,#d8dce2); border-radius:10px; background:var(--jj-bg,#fff); }
+        .controls { display:flex; align-items:center; gap:8px; }
         button { border:0; border-radius:7px; padding:8px 14px; background:var(--jj-accent,#315f9b); color:#fff; font:inherit; cursor:pointer; }
         button:disabled { opacity:.45; cursor:default; }
-        .status { min-width:0; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--jj-muted,#626a73); }
+        .details { min-width:0; flex:1; }
+        .status { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--jj-muted,#626a73); }
+        progress { display:block; box-sizing:border-box; width:100%; height:5px; margin-top:7px; accent-color:var(--jj-accent,#315f9b); }
+        progress[hidden] { display:none; }
         :host([theme="dark"]) { --jj-text:#f1f3f4; --jj-bg:#20242a; --jj-border:#454b54; --jj-muted:#b0b7c1; --jj-accent:#527fb9; }
       </style>
       <div class="player">
-        <button id="play" type="button" disabled>Play</button>
-        <button id="stop" type="button" disabled>Stop</button>
-        <span class="status" id="status" role="status" aria-live="polite">Initialisiere …</span>
+        <div class="controls">
+          <button id="play" type="button" disabled>Play</button>
+          <button id="stop" type="button" disabled>Stop</button>
+        </div>
+        <div class="details">
+          <span class="status" id="status" role="status" aria-live="polite">Initialisiere …</span>
+          <progress id="progress" max="100" hidden></progress>
+        </div>
       </div>`;
     this.playButton = this.shadowRoot.querySelector("#play");
     this.stopButton = this.shadowRoot.querySelector("#stop");
     this.statusNode = this.shadowRoot.querySelector("#status");
+    this.progressNode = this.shadowRoot.querySelector("#progress");
     this.playButton.addEventListener("click", () => this.togglePlayback());
     this.stopButton.addEventListener("click", () => this.stop());
     this.ready = false;
@@ -79,6 +119,7 @@ class JJazzLabPlayer extends HTMLElement {
     this.synth = null;
     this.sequencer = null;
     this.midiBuffer = null;
+    this.audioInitPromise = null;
   }
 
   connectedCallback() {
@@ -95,6 +136,21 @@ class JJazzLabPlayer extends HTMLElement {
     this.statusNode.textContent = message;
   }
 
+  setProgress(message, loaded = null, total = 0) {
+    this.setStatus(message);
+    this.progressNode.hidden = false;
+    if (total > 0) {
+      this.progressNode.value = Math.min(100, loaded / total * 100);
+    } else {
+      this.progressNode.removeAttribute("value");
+    }
+  }
+
+  hideProgress() {
+    this.progressNode.hidden = true;
+    this.progressNode.removeAttribute("value");
+  }
+
   requiredAttribute(name) {
     const value = this.getAttribute(name)?.trim();
     if (!value) throw new Error(`Das Attribut "${name}" fehlt.`);
@@ -107,20 +163,23 @@ class JJazzLabPlayer extends HTMLElement {
     this.ready = false;
     this.playButton.disabled = true;
     this.stopButton.disabled = true;
+    this.setProgress("Lade Song …");
     try {
       const songUrl = this.requiredAttribute("song-url");
       const renderServer = this.requiredAttribute("render-server").replace(/\/+$/, "");
       this.requiredAttribute("soundfont-url");
 
-      this.setStatus("Lade Song …");
       const songResponse = await fetch(songUrl);
       if (!songResponse.ok) throw new Error(`Song konnte nicht geladen werden (HTTP ${songResponse.status}).`);
-      const songBlob = await songResponse.blob();
+      const songBytes = await readResponseBytes(songResponse, (loaded, total) => {
+        this.setProgress("Lade Song …", loaded, total);
+      });
+      const songBlob = new Blob([songBytes]);
       const songName = new URL(songUrl, document.baseURI).pathname.split("/").pop() || "song.sng";
 
       const form = new FormData();
       form.append("song", songBlob, songName);
-      this.setStatus("Erzeuge MIDI …");
+      this.setProgress("Erzeuge MIDI …");
       const response = await fetch(renderServer + API_PATH + "/render", {
         method: "POST",
         headers: { Accept: "multipart/mixed, application/json" },
@@ -138,7 +197,10 @@ class JJazzLabPlayer extends HTMLElement {
         throw new Error("Render Server lieferte keine multipart/mixed-Antwort.");
       }
 
-      const parts = parseMultipart(await response.arrayBuffer(), (match[1] || match[2]).trim());
+      const responseBytes = await readResponseBytes(response, (loaded, total) => {
+        this.setProgress("Empfange MIDI …", loaded, total);
+      });
+      const parts = parseMultipart(responseBytes.buffer, (match[1] || match[2]).trim());
       const metadataPart = parts.find(part => part.id === "metadata");
       const midiPart = parts.find(part => part.id === "midi");
       if (!metadataPart || !midiPart) throw new Error("Render-Antwort enthält keine Metadata- und MIDI-Teile.");
@@ -149,29 +211,77 @@ class JJazzLabPlayer extends HTMLElement {
       this.midiLoaded = false;
       this.ready = true;
       this.playButton.disabled = false;
+      this.hideProgress();
       this.setStatus("Bereit");
     } finally {
       this.loading = false;
     }
   }
 
+  async loadSoundfont() {
+    const url = this.requiredAttribute("soundfont-url");
+    if (!("caches" in window)) {
+      this.setProgress("Lade SoundFont …");
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`SoundFont konnte nicht geladen werden (HTTP ${response.status}).`);
+      return readResponseBytes(response, (loaded, total) => this.setProgress("Lade SoundFont …", loaded, total));
+    }
+
+    const cache = await caches.open(SOUNDFONT_CACHE);
+    const cached = await cache.match(url);
+    if (cached) {
+      this.setProgress("Lade SoundFont aus Cache …", 1, 1);
+      return readResponseBytes(cached, (loaded, total) => this.setProgress("Lade SoundFont aus Cache …", loaded, total));
+    }
+
+    this.setProgress("Lade SoundFont …");
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`SoundFont konnte nicht geladen werden (HTTP ${response.status}).`);
+    const cacheCopy = response.clone();
+    const bytes = await readResponseBytes(response, (loaded, total) => {
+      this.setProgress("Lade SoundFont …", loaded, total);
+    });
+    try {
+      await cache.put(url, cacheCopy);
+    } catch (error) {
+      console.warn("JJazzLab Player: SoundFont konnte nicht im Cache gespeichert werden:", error);
+    }
+    return bytes;
+  }
+
   async initializeAudio() {
     if (this.sequencer) return;
-    this.setStatus("Lade SoundFont und Audio-Engine …");
-    this.context = new AudioContext();
-    await this.context.audioWorklet.addModule(new URL("./spessasynth_processor.min.js", import.meta.url));
-    this.synth = new WorkletSynthesizer(this.context);
-    this.synth.connect(this.context.destination);
+    if (this.audioInitPromise) return this.audioInitPromise;
 
-    const soundfontResponse = await fetch(this.requiredAttribute("soundfont-url"));
-    if (!soundfontResponse.ok) throw new Error(`SoundFont konnte nicht geladen werden (HTTP ${soundfontResponse.status}).`);
-    await this.synth.soundBankManager.addSoundBank(await soundfontResponse.arrayBuffer(), "main");
-    await this.synth.isReady;
-    this.sequencer = new Sequencer(this.synth);
+    this.audioInitPromise = (async () => {
+      this.setProgress("Initialisiere Audio-Engine …");
+      this.context = new AudioContext();
+      await this.context.audioWorklet.addModule(new URL("./spessasynth_processor.min.js", import.meta.url));
+      this.synth = new WorkletSynthesizer(this.context);
+      this.synth.connect(this.context.destination);
+
+      const soundfontBytes = await this.loadSoundfont();
+      this.setProgress("Initialisiere SoundFont …");
+      await this.synth.soundBankManager.addSoundBank(soundfontBytes.buffer.slice(
+        soundfontBytes.byteOffset,
+        soundfontBytes.byteOffset + soundfontBytes.byteLength
+      ), "main");
+      await this.synth.isReady;
+      this.sequencer = new Sequencer(this.synth);
+      this.hideProgress();
+    })();
+
+    try {
+      await this.audioInitPromise;
+    } catch (error) {
+      this.audioInitPromise = null;
+      throw error;
+    }
   }
 
   async togglePlayback() {
     if (!this.ready) return;
+    this.playButton.disabled = true;
     try {
       await this.initializeAudio();
       await this.context.resume();
@@ -192,6 +302,8 @@ class JJazzLabPlayer extends HTMLElement {
       }
     } catch (error) {
       this.fail(error);
+    } finally {
+      this.playButton.disabled = false;
     }
   }
 
@@ -218,6 +330,7 @@ class JJazzLabPlayer extends HTMLElement {
 
   fail(error) {
     console.error("JJazzLab Player:", error);
+    this.hideProgress();
     this.setStatus(error?.message || String(error));
     this.playButton.disabled = !this.ready;
   }
