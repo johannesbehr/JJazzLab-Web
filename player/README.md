@@ -56,3 +56,15 @@ cache name in `player/src/jjazzlab-player.js` (for example, from
 A small progress indicator is shown while the song, rendered MIDI response,
 and SoundFont are downloaded. It displays a percentage when the server provides
 a content length; otherwise it uses an indeterminate progress animation.
+
+
+## Localization
+
+The player supports English, German, and French. It uses the language declared
+by the player element or its containing page (the nearest `lang` attribute).
+If no language is declared, it falls back to the browser language. Unsupported
+languages use English.
+
+The integration test page applies the same browser-language selection. To
+override the language for an embedded player, set its `lang` attribute, for
+example `lang="fr"`.
