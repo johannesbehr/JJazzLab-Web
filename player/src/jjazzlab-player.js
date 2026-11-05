@@ -84,7 +84,7 @@ function findBytes(haystack, needle, startAt) {
   return -1;
 }
 
-function parseMultipart(buffer, boundary) {
+function parseMultipart(buffer, boundary, element) {
   const bytes = new Uint8Array(buffer);
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
@@ -99,7 +99,7 @@ function parseMultipart(buffer, boundary) {
     if (bytes[cursor] === 45 && bytes[cursor + 1] === 45) break;
     if (bytes[cursor] === 13 && bytes[cursor + 1] === 10) cursor += 2;
     const headerEnd = findBytes(bytes, separator, cursor);
-    if (headerEnd < 0) throw new Error(t("multipartHeaders"));
+    if (headerEnd < 0) throw new Error(t("multipartHeaders", element));
 
     const headers = {};
     for (const line of decoder.decode(bytes.slice(cursor, headerEnd)).split("\r\n")) {
@@ -109,7 +109,7 @@ function parseMultipart(buffer, boundary) {
 
     const bodyStart = headerEnd + separator.length;
     const nextAt = findBytes(bytes, nextMarker, bodyStart);
-    if (nextAt < 0) throw new Error(t("multipartBoundary"));
+    if (nextAt < 0) throw new Error(t("multipartBoundary", element));
     parts.push({
       id: (headers["content-id"] || "").replace(/^<|>$/g, ""),
       body: bytes.slice(bodyStart, nextAt)
@@ -271,7 +271,7 @@ class JJazzLabPlayer extends HTMLElement {
       const responseBytes = await readResponseBytes(response, (loaded, total) => {
         this.setProgress(t("renderingMidi", this), loaded, total);
       });
-      const parts = parseMultipart(responseBytes.buffer, (match[1] || match[2]).trim());
+      const parts = parseMultipart(responseBytes.buffer, (match[1] || match[2]).trim(), this);
       const metadataPart = parts.find(part => part.id === "metadata");
       const midiPart = parts.find(part => part.id === "midi");
       if (!metadataPart || !midiPart) throw new Error(t("missingParts", this));
@@ -305,12 +305,12 @@ class JJazzLabPlayer extends HTMLElement {
       return readResponseBytes(cached, (loaded, total) => this.setProgress(t("loadingSoundfontCache", this), loaded, total));
     }
 
-    this.setProgress("Lade SoundFont …");
+    this.setProgress(t("loadingSoundfont", this));
     const response = await fetch(url);
-    if (!response.ok) throw new Error(`SoundFont konnte nicht geladen werden (HTTP ${response.status}).`);
+    if (!response.ok) throw new Error(t("soundfontFailed", this, { status: response.status }));
     const cacheCopy = response.clone();
     const bytes = await readResponseBytes(response, (loaded, total) => {
-      this.setProgress("Lade SoundFont …", loaded, total);
+      this.setProgress(t("loadingSoundfont", this), loaded, total);
     });
     try {
       await cache.put(url, cacheCopy);
