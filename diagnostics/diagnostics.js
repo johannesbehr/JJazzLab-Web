@@ -223,6 +223,4 @@ urlInput.addEventListener("keydown", event => {
   if (event.key === "Enter") runChecks();
 });
 
-if (location.protocol === "http:" || location.protocol === "https:") {
-  urlInput.value = location.origin;
-}
+urlInput.value = "https://wmager.ddns.net/java/jjazzlab-render-server";
