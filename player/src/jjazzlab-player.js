@@ -16,7 +16,7 @@ const translations = {
     loadingSoundfont: "Loading SoundFont …", loadingSoundfontCache: "Loading SoundFont from cache …",
     soundfontFailed: "Could not load SoundFont (HTTP {status}).",
     initializingAudio: "Initializing audio engine …", initializingSoundfont: "Initializing SoundFont …",
-    play: "Play", pause: "Pause", playback: "Playing", paused: "Paused",
+    play: "Play", pause: "Pause", stop: "Stop", playback: "Playing", paused: "Paused",
     playbackFinished: "Playback finished", stopped: "Stopped", errorPrefix: "Error:"
   },
   de: {
@@ -31,7 +31,7 @@ const translations = {
     loadingSoundfont: "Lade SoundFont …", loadingSoundfontCache: "Lade SoundFont aus dem Cache …",
     soundfontFailed: "SoundFont konnte nicht geladen werden (HTTP {status}).",
     initializingAudio: "Initialisiere Audio-Engine …", initializingSoundfont: "Initialisiere SoundFont …",
-    play: "Play", pause: "Pause", playback: "Wiedergabe", paused: "Pausiert",
+    play: "Play", pause: "Pause", stop: "Stop", playback: "Wiedergabe", paused: "Pausiert",
     playbackFinished: "Wiedergabe beendet", stopped: "Gestoppt", errorPrefix: "Fehler:"
   },
   fr: {
@@ -46,7 +46,7 @@ const translations = {
     loadingSoundfont: "Chargement du SoundFont …", loadingSoundfontCache: "Chargement du SoundFont depuis le cache …",
     soundfontFailed: "Impossible de charger le SoundFont (HTTP {status}).",
     initializingAudio: "Initialisation du moteur audio …", initializingSoundfont: "Initialisation du SoundFont …",
-    play: "Lecture", pause: "Pause", playback: "Lecture en cours", paused: "En pause",
+    play: "Lecture", pause: "Pause", stop: "Arrêter", playback: "Lecture en cours", paused: "En pause",
     playbackFinished: "Lecture terminée", stopped: "Arrêté", errorPrefix: "Erreur :"
   }
 };
@@ -170,7 +170,7 @@ class JJazzLabPlayer extends HTMLElement {
       <div class="player">
         <div class="controls">
           <button id="play" type="button" disabled>${t("play", this)}</button>
-          <button id="stop" type="button" disabled>${t("stopped", this)}</button>
+          <button id="stop" type="button" disabled>${t("stop", this)}</button>
         </div>
         <div class="details">
           <span class="status" id="status" role="status" aria-live="polite">${t("initialising", this)}</span>
