@@ -315,7 +315,7 @@ class JJazzLabPlayer extends HTMLElement {
     try {
       await cache.put(url, cacheCopy);
     } catch (error) {
-      console.warn("JJazzLab Player: SoundFont konnte nicht im Cache gespeichert werden:", error);
+      console.warn("JJazzLab Player: Could not store SoundFont in the browser cache:", error);
     }
     return bytes;
   }
