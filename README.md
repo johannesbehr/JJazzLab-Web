@@ -18,6 +18,20 @@ The first testpages are online:
 - [Render Server test page: diagnostics/index.html](https://johannesbehr.github.io/JJazzLab-Web/diagnostics/index.html)
 - [Player test page: diagnostics/player-test.html](https://johannesbehr.github.io/JJazzLab-Web/diagnostics/player-test.html)
 
+Integrate the player in any html-page just with this few lines:
+```html
+<script
+  type="module"
+  src="https://johannesbehr.github.io/JJazzLab-Web/player/jjazzlab-player.js">
+</script>
+
+<jjazzlab-player
+  song-url="https://raw.githubusercontent.com/CapoShiva/jjazz-repertoire/main/Repertoire/AChildIsBorn-Bb-Theme.sng"
+  render-server="https://wmager.ddns.net/java/jjazzlab-render-server"
+  soundfont-url="https://johannesbehr.github.io/JJazzLab-Web/player/soundfonts/JJazzlab.sf3">
+</jjazzlab-player>
+```
+
 ## Architecture
 
 The Render Server is the only module that needs JJazzLab Core. The Player and Editor communicate with it through a documented HTTP API. Song data is exchanged as JJazzLab-compatible `.sng` XML; the browser may inspect and edit the XML but does not need to maintain a complete internal JJazzLab song model.
