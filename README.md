@@ -13,6 +13,11 @@ The project is organized into independent parts:
 
 Early development. The API and module boundaries are being established; interfaces may change until the first stable release.
 
+The first testpages are online:
+
+- [Render Server test page: diagnostics/index.html](https://johannesbehr.github.io/JJazzLab-Web/diagnostics/player-test.html)
+- [Player test page: diagnostics/player-test.html](https://johannesbehr.github.io/JJazzLab-Web/diagnostics/player-test.html)
+
 ## Architecture
 
 The Render Server is the only module that needs JJazzLab Core. The Player and Editor communicate with it through a documented HTTP API. Song data is exchanged as JJazzLab-compatible `.sng` XML; the browser may inspect and edit the XML but does not need to maintain a complete internal JJazzLab song model.
