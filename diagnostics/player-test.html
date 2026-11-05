@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -21,43 +21,71 @@
 </head>
 <body>
 <main>
-  <p class="muted">JJazzLab Web · Browser integration test</p>
-  <h1>Player testen</h1>
-  <p>Diese Seite testet den vollständigen Ablauf: Song laden, an den Render Server senden, MIDI empfangen und mit SpessaSynth im Browser abspielen.</p>
-
+  <p class="muted" data-i18n="eyebrow">JJazzLab Web · Browser integration test</p>
+  <h1 data-i18n="heading">Test the player</h1>
+  <p data-i18n="intro">This page tests the complete workflow: load a song, send it to the Render Server, receive MIDI, and play it in the browser with SpessaSynth.</p>
   <form id="player-form">
-    <label for="song-url">URL der .sng-Datei</label>
+    <label for="song-url" data-i18n="songUrlLabel">Song file URL (.sng)</label>
     <input id="song-url" type="url" required value="https://raw.githubusercontent.com/CapoShiva/jjazz-repertoire/refs/heads/main/Repertoire/AChildIsBorn-Bb-Theme.sng">
-
-    <label for="render-server">Render Server (Basis-URL)</label>
+    <label for="render-server" data-i18n="renderServerLabel">Render Server (base URL)</label>
     <input id="render-server" type="url" required value="https://wmager.ddns.net/java/jjazzlab-render-server">
-
-    <label for="soundfont-url">SoundFont-URL</label>
+    <label for="soundfont-url" data-i18n="soundfontLabel">SoundFont URL</label>
     <input id="soundfont-url" type="url" required value="https://johannesbehr.github.io/JJazzLab-Web/player/soundfonts/JJazzlab.sf3">
-
-    <button type="submit">Player laden</button>
+    <button type="submit" data-i18n="loadPlayer">Load player</button>
   </form>
-
   <section class="test-area">
-    <h2>Wiedergabe</h2>
-    <p class="muted">Nach dem Laden sollte der Player zunächst „Bereit“ anzeigen. Mit Play wird die Audio-Engine initialisiert und der Song abgespielt.</p>
-    <div id="player-container" aria-live="polite">Noch kein Player geladen.</div>
+    <h2 data-i18n="playbackHeading">Playback</h2>
+    <p class="muted" data-i18n="playbackHelp">After loading, the player should show “Ready”. Press Play to initialize the audio engine and start playback.</p>
+    <div id="player-container" aria-live="polite" data-i18n="notLoaded">No player loaded yet.</div>
   </section>
 </main>
-
 <script type="module">
   import "../player/jjazzlab-player.js";
-
+  const messages = {
+    en: {
+      eyebrow: "JJazzLab Web · Browser integration test", heading: "Test the player",
+      intro: "This page tests the complete workflow: load a song, send it to the Render Server, receive MIDI, and play it in the browser with SpessaSynth.",
+      songUrlLabel: "Song file URL (.sng)", renderServerLabel: "Render Server (base URL)",
+      soundfontLabel: "SoundFont URL", loadPlayer: "Load player", playbackHeading: "Playback",
+      playbackHelp: "After loading, the player should show “Ready”. Press Play to initialize the audio engine and start playback.",
+      notLoaded: "No player loaded yet."
+    },
+    de: {
+      eyebrow: "JJazzLab Web · Browser-Integrationstest", heading: "Player testen",
+      intro: "Diese Seite testet den vollständigen Ablauf: Song laden, an den Render Server senden, MIDI empfangen und mit SpessaSynth im Browser abspielen.",
+      songUrlLabel: "URL der Song-Datei (.sng)", renderServerLabel: "Render Server (Basis-URL)",
+      soundfontLabel: "SoundFont-URL", loadPlayer: "Player laden", playbackHeading: "Wiedergabe",
+      playbackHelp: "Nach dem Laden sollte der Player „Bereit“ anzeigen. Mit Play wird die Audio-Engine initialisiert und die Wiedergabe gestartet.",
+      notLoaded: "Noch kein Player geladen."
+    },
+    fr: {
+      eyebrow: "JJazzLab Web · Test d’intégration du lecteur", heading: "Tester le lecteur",
+      intro: "Cette page teste le processus complet : charger un morceau, l’envoyer au serveur de rendu, recevoir le MIDI et le lire dans le navigateur avec SpessaSynth.",
+      songUrlLabel: "URL du fichier musical (.sng)", renderServerLabel: "Serveur de rendu (URL de base)",
+      soundfontLabel: "URL du SoundFont", loadPlayer: "Charger le lecteur", playbackHeading: "Lecture",
+      playbackHelp: "Après le chargement, le lecteur doit afficher « Prêt ». Appuyez sur Lecture pour initialiser le moteur audio et démarrer la lecture.",
+      notLoaded: "Aucun lecteur n’est encore chargé."
+    }
+  };
+  const languages = [...(navigator.languages || []), navigator.language];
+  const language = languages.map(value => value?.toLowerCase().split("-")[0]).find(value => messages[value]) || "en";
+  document.documentElement.lang = language;
+  document.title = {
+    en: "JJazzLab Web – Player Integration Test",
+    de: "JJazzLab Web – Player-Integrationstest",
+    fr: "JJazzLab Web – Test d’intégration du lecteur"
+  }[language];
+  document.querySelectorAll("[data-i18n]").forEach(element => {
+    const key = element.dataset.i18n;
+    element.textContent = messages[language][key] || messages.en[key];
+  });
   const form = document.querySelector("#player-form");
   const container = document.querySelector("#player-container");
-
   form.addEventListener("submit", event => {
     event.preventDefault();
-
     const songUrl = document.querySelector("#song-url").value.trim();
     const renderServer = document.querySelector("#render-server").value.trim();
     const soundfontUrl = document.querySelector("#soundfont-url").value.trim();
-
     container.replaceChildren();
     const player = document.createElement("jjazzlab-player");
     player.setAttribute("song-url", songUrl);
@@ -65,7 +93,6 @@
     player.setAttribute("soundfont-url", soundfontUrl);
     container.append(player);
   });
-
   form.requestSubmit();
 </script>
 </body>
