@@ -198,6 +198,11 @@ class JJazzLabPlayer extends HTMLElement {
   }
 
   attributeChangedCallback(name) {
+    if (name === "lang" && this.playButton) {
+      this.playButton.textContent = t(this.sequencer && !this.sequencer.paused ? "pause" : "play", this);
+      this.stopButton.textContent = t("stop", this);
+      return;
+    }
     if (["song-url", "render-server"].includes(name) && this.isConnected && !this.loading) {
       this.loadAndRender().catch(error => this.fail(error));
     }
