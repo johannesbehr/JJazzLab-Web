@@ -15,7 +15,7 @@ Early development. The API and module boundaries are being established; interfac
 
 The first testpages are online:
 
-- [Render Server test page: diagnostics/index.html](https://johannesbehr.github.io/JJazzLab-Web/diagnostics/player-test.html)
+- [Render Server test page: diagnostics/index.html](https://johannesbehr.github.io/JJazzLab-Web/diagnostics/index.html)
 - [Player test page: diagnostics/player-test.html](https://johannesbehr.github.io/JJazzLab-Web/diagnostics/player-test.html)
 
 ## Architecture
