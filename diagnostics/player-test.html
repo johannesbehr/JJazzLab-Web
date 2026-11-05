@@ -16,7 +16,10 @@
     input { box-sizing: border-box; width: 100%; padding: 10px; border: 1px solid color-mix(in srgb, CanvasText 30%, transparent); border-radius: 6px; background: Canvas; color: CanvasText; font: inherit; }
     button { margin-top: 18px; padding: 10px 16px; border: 0; border-radius: 7px; background: #315f9b; color: white; font: inherit; cursor: pointer; }
     jjazzlab-player { display: block; margin-top: 16px; }
-    code { overflow-wrap: anywhere;  }\n    .embed-area { margin-top: 24px; padding: 20px; border: 1px solid color-mix(in srgb, CanvasText 20%, transparent); border-radius: 12px; }\n    .embed-area pre { overflow-x: auto; padding: 14px; border-radius: 8px; background: color-mix(in srgb, CanvasText 7%, Canvas); white-space: pre-wrap; overflow-wrap: anywhere; }\n    .embed-area button { margin-top: 8px; }\n    #copy-status { min-height: 1.5em; }\n
+    code { overflow-wrap: anywhere;  }
+    .embed-area { margin-top: 24px; padding: 20px; border: 1px solid color-mix(in srgb, CanvasText 20%, transparent); border-radius: 12px; }
+    .embed-area pre { overflow-x: auto; padding: 14px; border-radius: 8px; background: color-mix(in srgb, CanvasText 7%, Canvas); white-space: pre-wrap; overflow-wrap: anywhere; }
+    .embed-area button { margin-top: 8px; }\n    #copy-status { min-height: 1.5em; }\n
   </style>
 </head>
 <body>
@@ -55,7 +58,8 @@
       songUrlLabel: "Song file URL (.sng)", renderServerLabel: "Render Server (base URL)",
       soundfontLabel: "SoundFont URL", loadPlayer: "Load player", playbackHeading: "Playback",
       playbackHelp: "After loading, the player should show “Ready”. Press Play to initialize the audio engine and start playback.",
-      notLoaded: "No player loaded yet."\n      embedHeading: "Embed code",
+      notLoaded: "No player loaded yet."
+      embedHeading: "Embed code",
       embedHelp: "Use this HTML fragment to embed a player with the settings entered above.",
       copyHtml: "Copy HTML", copied: "HTML fragment copied to clipboard.",
       copyFailed: "Could not copy automatically. Select and copy the code above.",
@@ -66,7 +70,8 @@
       songUrlLabel: "URL der Song-Datei (.sng)", renderServerLabel: "Render Server (Basis-URL)",
       soundfontLabel: "SoundFont-URL", loadPlayer: "Player laden", playbackHeading: "Wiedergabe",
       playbackHelp: "Nach dem Laden sollte der Player „Bereit“ anzeigen. Mit Play wird die Audio-Engine initialisiert und die Wiedergabe gestartet.",
-      notLoaded: "Noch kein Player geladen."\n      embedHeading: "Einbettungscode",
+      notLoaded: "Noch kein Player geladen."
+      embedHeading: "Einbettungscode",
       embedHelp: "Mit diesem HTML-Fragment kannst du einen Player mit den oben eingegebenen Einstellungen einbinden.",
       copyHtml: "HTML kopieren", copied: "HTML-Fragment wurde in die Zwischenablage kopiert.",
       copyFailed: "Automatisches Kopieren nicht möglich. Bitte kopiere den Code oben manuell.",
@@ -77,7 +82,8 @@
       songUrlLabel: "URL du fichier musical (.sng)", renderServerLabel: "Serveur de rendu (URL de base)",
       soundfontLabel: "URL du SoundFont", loadPlayer: "Charger le lecteur", playbackHeading: "Lecture",
       playbackHelp: "Après le chargement, le lecteur doit afficher « Prêt ». Appuyez sur Lecture pour initialiser le moteur audio et démarrer la lecture.",
-      notLoaded: "Aucun lecteur n’est encore chargé."\n      embedHeading: "Code d’intégration",
+      notLoaded: "Aucun lecteur n’est encore chargé."
+      embedHeading: "Code d’intégration",
       embedHelp: "Utilisez ce fragment HTML pour intégrer un lecteur avec les paramètres saisis ci-dessus.",
       copyHtml: "Copier le HTML", copied: "Le fragment HTML a été copié dans le presse-papiers.",
       copyFailed: "Copie automatique impossible. Sélectionnez et copiez le code ci-dessus.",
@@ -107,14 +113,14 @@
     const soundfontUrl = document.querySelector("#soundfont-url").value.trim();
     const escapeAttribute = value => value.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
     return [
-      '<script type="module" src="https://johannesbehr.github.io/JJazzLab-Web/player/jjazzlab-player.js"><\\/script>',
+      '<script type="module" src="https://johannesbehr.github.io/JJazzLab-Web/player/jjazzlab-player.js">' + "</" + "script>",
       '<jjazzlab-player',
       `  lang="${escapeAttribute(language)}"`,
       `  song-url="${escapeAttribute(songUrl)}"`,
       `  render-server="${escapeAttribute(renderServer)}"`,
       `  soundfont-url="${escapeAttribute(soundfontUrl)}">`,
       '</jjazzlab-player>'
-    ].join("\\n");
+    ].join("\n");
   }
 
   function updateEmbedCode() {
