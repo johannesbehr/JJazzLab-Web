@@ -5,7 +5,7 @@ A modular, open-source web application and rendering service built around JJazzL
 The project is organized into independent parts:
 
 - **Render Server** – renders JJazzLab song files (`.sng`) to MIDI.
-- **Player** – a lightweight browser MIDI player. It does not depend on JJazzLab Core.
+- **Player** – a lightweight browser song file (`.sng`) player. It does not depend on JJazzLab Core.
 - **Editor** – a browser-based song editor built on top of the Player.
 - **Diagnostics** – a standalone web page for checking and testing any compatible Render Server.
 
