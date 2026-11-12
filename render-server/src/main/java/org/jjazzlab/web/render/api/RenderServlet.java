@@ -62,13 +62,25 @@ public final class RenderServlet extends HttpServlet {
         }
 
         Path uploadedSong = null;
+		Path uploadedMix = null;
+		
         try {
             Part songPart;
+			Part mixPart;
+			
             try {
                 songPart = request.getPart("song");
             } catch (IllegalStateException ex) {
                 writeError(response, HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE,
                         "PAYLOAD_TOO_LARGE", "The uploaded song exceeds the allowed size.");
+                return;
+            }
+
+            try {
+                mixPart = request.getPart("mix");
+            } catch (IllegalStateException ex) {
+                writeError(response, HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE,
+                        "PAYLOAD_TOO_LARGE", "The uploaded mix exceeds the allowed size.");
                 return;
             }
 
@@ -79,7 +91,9 @@ public final class RenderServlet extends HttpServlet {
             }
 
             for (Part part : request.getParts()) {
-                if (!"song".equals(part.getName()) && part.getSize() > 0) {
+                if (!"song".equals(part.getName()) &&
+					!"mix".equals(part.getName()) &&
+					part.getSize() > 0) {
                     writeError(response, HttpServletResponse.SC_BAD_REQUEST,
                             "UNSUPPORTED_FIELD", "The request contains an unsupported multipart field.");
                     return;
@@ -90,8 +104,17 @@ public final class RenderServlet extends HttpServlet {
             try (InputStream input = songPart.getInputStream()) {
                 Files.copy(input, uploadedSong, StandardCopyOption.REPLACE_EXISTING);
             }
+			
+			
+			
+			if(mixPart != null && mixPart.size>0){
+				uploadedMix = Files.createTempFile("jjazzlab-upload-", ".mix");
+				try (InputStream input = mixPart.getInputStream()) {
+					Files.copy(input, uploadedMix, StandardCopyOption.REPLACE_EXISTING);
+				}
+			}
 
-            RenderOutput rendered = RENDERER.render(uploadedSong);
+            RenderOutput rendered = RENDERER.render(uploadedSong, uploadedMix);
             writeMultipartResponse(response, rendered);
 
         } catch (SongCreationException ex) {

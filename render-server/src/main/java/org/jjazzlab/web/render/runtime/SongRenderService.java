@@ -34,12 +34,12 @@ public final class SongRenderService {
 
     private static final ObjectMapper JSON = new ObjectMapper();
 
-    public RenderOutput render(Path songFile)
+    public RenderOutput render(Path songFile, Path mixFile)
             throws SongCreationException, UnsupportedEditException,
             MusicGenerationException, IOException {
 
         Song song = SongFactory.getDefault().loadFromFile(songFile.toFile());
-        MidiMix midiMix = MidiMixManager.getDefault().createMix(song);
+        MidiMix midiMix = (mixFile!=null)?MidiMixManager.getDefault().loadFromFile(mixFile.toFile()):MidiMixManager.getDefault().createMix(song);
 
         // Match instruments to the default output synth (including drum-channel routing).
         OutputSynthManager.getDefault().getDefaultOutputSynth().fixInstruments(midiMix, true);
